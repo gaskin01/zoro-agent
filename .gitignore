@@ -1,0 +1,9 @@
+.env
+node_modules
+dist
+*.log
+.DS_Store
+# Circuit binaries are fetched at setup (scripts/download-circuits.sh),
+# not committed - see README.
+circuits/*.wasm
+circuits/*.zkey
