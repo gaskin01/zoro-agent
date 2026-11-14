@@ -1,0 +1,1045 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="dark light" />
+<link rel="icon" href="data:," />
+<title>Make.fun Panel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#000000; --bg-2:#0a0a0a; --bg-3:#111111; --bg-hover:#1a1a1a;
+    --border:#262626; --border-2:#333333;
+    --fg:#ededed; --fg-2:#a1a1a1; --fg-3:#666666;
+    --green:#00c853; --green-dim:rgba(0,200,83,.12);
+    --red:#ff3b30; --red-dim:rgba(255,59,48,.1);
+    --amber:#f5a623; --amber-dim:rgba(245,166,35,.12);
+    --blue:#0070f3; --blue-dim:rgba(0,112,243,.12);
+    --track:#262626;
+    --radius:6px;
+  }
+  @media (prefers-color-scheme: light){
+    :root{
+      --bg:#ffffff; --bg-2:#fafafa; --bg-3:#f5f5f5; --bg-hover:#eaeaea;
+      --border:#eaeaea; --border-2:#d4d4d4;
+      --fg:#171717; --fg-2:#666666; --fg-3:#999999;
+      --track:#eaeaea;
+    }
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--fg);font-family:'Geist',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;-webkit-font-smoothing:antialiased;font-size:14px;line-height:1.5}
+  .mono{font-family:'Geist Mono',ui-monospace,SFMono-Regular,Menlo,monospace}
+  a{color:inherit;text-decoration:none}
+  button{font-family:inherit;cursor:pointer;min-height:36px}
+
+  /* ---------- Top bar (Vercel style) ---------- */
+  .topbar{position:sticky;top:0;z-index:50;background:color-mix(in srgb, var(--bg) 82%, transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+  .topbar-in{max-width:1200px;margin:0 auto;padding:0 24px;height:56px;display:flex;align-items:center;gap:16px}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:15px;letter-spacing:-.02em;white-space:nowrap}
+  .brand-mark{width:26px;height:26px;border-radius:7px;background:var(--fg);color:var(--bg);display:grid;place-items:center;font-weight:700;font-size:13px;flex:none}
+  .brand-slash{color:var(--fg-3);font-weight:400}
+  .brand-sub{color:var(--fg-2);font-weight:500}
+  .top-actions{margin-left:auto;display:flex;align-items:center;gap:10px}
+  .live-pill{display:flex;align-items:center;gap:7px;border:1px solid var(--border);border-radius:999px;padding:5px 11px;font-size:12px;font-weight:500;color:var(--fg-2)}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--green);flex:none;position:relative}
+  .dot::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:1px solid var(--green);opacity:0;animation:ping 2s cubic-bezier(0,0,.2,1) infinite}
+  .dot.stale{background:var(--amber)}
+  .dot.stale::after{border-color:var(--amber)}
+  .dot.err{background:var(--red)}
+  .dot.err::after{border-color:var(--red)}
+  @keyframes ping{0%{transform:scale(.5);opacity:.9}80%,100%{transform:scale(1.4);opacity:0}}
+  .clock{font-size:12px;color:var(--fg-2);border:1px solid var(--border);border-radius:999px;padding:5px 11px}
+  .refresh-btn{display:inline-flex;align-items:center;gap:7px;background:var(--fg);color:var(--bg);border:1px solid var(--fg);border-radius:999px;padding:5px 13px;font-size:12px;font-weight:600;min-height:30px}
+  .refresh-btn svg{flex:none}
+  .refresh-btn.spinning svg{animation:spin .8s linear infinite}
+  .refresh-btn:disabled{opacity:.65;cursor:wait}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#940202,#3a0101);display:grid;place-items:center;color:#fff;font-size:11px;font-weight:700;flex:none;border:1px solid var(--border-2)}
+  @media(max-width:640px){.clock{display:none}.brand-sub{display:none}.brand-slash{display:none}.live-pill .pill-extra{display:none}}
+
+  /* Tabs */
+  .tabs{max-width:1200px;margin:0 auto;padding:0 24px;display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
+  .tabs::-webkit-scrollbar{display:none}
+  .tab{padding:10px 12px;font-size:14px;color:var(--fg-2);border-bottom:2px solid transparent;white-space:nowrap;background:none;border-top:none;border-left:none;border-right:none;min-height:40px}
+  .tab:hover{color:var(--fg)}
+  .tab.active{color:var(--fg);border-bottom-color:var(--fg);font-weight:500}
+
+  .wrap{max-width:1200px;margin:0 auto;padding:28px 24px 64px}
+  @media(max-width:640px){.wrap{padding:20px 16px 48px}}
+
+  /* Hero row */
+  .hero{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:24px;animation:fadeUp .5s ease both}
+  .hero h1{font-size:32px;line-height:1.1;letter-spacing:-.04em;margin:0 0 6px;font-weight:700}
+  @media(max-width:640px){.hero h1{font-size:26px}}
+  .hero p{margin:0;color:var(--fg-2);font-size:14px;max-width:560px}
+  .hero p b{color:var(--fg);font-weight:600}
+  .snapshot{font-size:12px;color:var(--fg-3);text-align:right}
+  .snapshot .mono{color:var(--fg-2)}
+  .snapshot .stale-txt{color:var(--amber);font-weight:600}
+
+  /* Stat cards */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px}
+  @media(max-width:900px){.stats{grid-template-columns:repeat(2,1fr)}}
+  .stat{background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;animation:fadeUp .5s ease both}
+  .stat:nth-child(2){animation-delay:.05s}.stat:nth-child(3){animation-delay:.1s}.stat:nth-child(4){animation-delay:.15s}
+  .stat-label{font-size:12px;color:var(--fg-2);display:flex;align-items:center;gap:6px;margin-bottom:8px;font-weight:500}
+  .stat-value{font-size:28px;font-weight:700;letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums}
+  .stat-value small{font-size:14px;color:var(--fg-3);font-weight:500}
+  .stat-sub{font-size:12px;color:var(--fg-3);margin-top:7px}
+  .stat-sub .up{color:var(--green);font-weight:600}
+  .stat-sub .down{color:var(--red);font-weight:600}
+
+  /* Toolbar */
+  .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:26px 0 14px}
+  .seg{display:flex;background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius);padding:3px;gap:2px}
+  .seg button{border:none;background:transparent;color:var(--fg-2);font-size:13px;font-weight:500;padding:6px 12px;border-radius:4px;min-height:32px}
+  .seg button.active{background:var(--fg);color:var(--bg)}
+  .search{margin-left:auto;position:relative}
+  .search input{background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius);color:var(--fg);font-family:inherit;font-size:13px;padding:8px 12px 8px 32px;width:220px;min-height:36px;outline:none}
+  .search input:focus{border-color:var(--fg-3)}
+  .search svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--fg-3)}
+  @media(max-width:640px){.search{margin-left:0;width:100%}.search input{width:100%}}
+
+  .section-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:8px 0 12px}
+  .section-head h2{font-size:16px;font-weight:600;letter-spacing:-.02em;margin:0}
+  .section-head span{font-size:12px;color:var(--fg-3)}
+
+  /* Bounty cards */
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+  @media(max-width:860px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius);padding:18px;transition:border-color .15s ease, transform .15s ease;animation:fadeUp .45s ease both}
+  .card:hover{border-color:var(--border-2)}
+  .card-top{display:flex;align-items:flex-start;gap:10px}
+  .card-icon{width:34px;height:34px;border-radius:8px;background:var(--bg-3);border:1px solid var(--border);display:grid;place-items:center;font-size:16px;flex:none}
+  .card-title{font-size:14px;font-weight:600;letter-spacing:-.01em;line-height:1.3}
+  .card-id{font-size:12px;color:var(--fg-3)}
+  .badge{margin-left:auto;flex:none;font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px;letter-spacing:.01em;white-space:nowrap}
+  .badge.in{background:var(--green-dim);color:var(--green);border:1px solid color-mix(in srgb, var(--green) 35%, transparent)}
+  .badge.out{background:var(--red-dim);color:var(--red);border:1px solid color-mix(in srgb, var(--red) 30%, transparent)}
+  .badge.race{background:var(--blue-dim);color:var(--blue);border:1px solid color-mix(in srgb, var(--blue) 30%, transparent)}
+  .badge.open{background:var(--amber-dim);color:var(--amber);border:1px solid color-mix(in srgb, var(--amber) 30%, transparent)}
+  .rank-row{display:flex;align-items:baseline;gap:10px;margin:16px 0 4px;flex-wrap:wrap}
+  .rank-big{font-size:30px;font-weight:700;letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums}
+  .rank-of{color:var(--fg-3);font-size:13px}
+  .prize-rank{font-size:11px;font-weight:600;color:var(--fg-2);border:1px solid var(--border-2);border-radius:999px;padding:2px 8px;white-space:nowrap}
+  .prize-rank b{color:var(--fg)}
+  .score-chip{margin-left:auto;text-align:right}
+  .score-chip .v{font-size:15px;font-weight:600;font-variant-numeric:tabular-nums}
+  .score-chip .l{font-size:11px;color:var(--fg-3)}
+  .bar-wrap{margin-top:12px}
+  .bar-meta{display:flex;justify-content:space-between;font-size:11px;color:var(--fg-3);margin-bottom:6px;gap:8px;flex-wrap:wrap}
+  .bar-meta b{color:var(--fg-2);font-weight:600}
+  .bar{height:6px;background:var(--track);border-radius:999px;overflow:hidden;position:relative}
+  .bar-fill{height:100%;border-radius:999px;width:0;transition:width 1.1s cubic-bezier(.22,1,.36,1)}
+  .bar-fill.g{background:var(--green)} .bar-fill.r{background:var(--red)} .bar-fill.b{background:var(--blue)} .bar-fill.a{background:var(--amber)}
+  .bar-cut{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--fg);opacity:.85}
+  .card-foot{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:14px;padding-top:13px;border-top:1px solid var(--border);font-size:12px;color:var(--fg-2);align-items:center}
+  .card-foot .k{color:var(--fg-3)}
+  .submit-dots{display:inline-flex;gap:4px;vertical-align:middle;margin-left:2px}
+  .sdot{width:8px;height:8px;border-radius:50%;background:var(--track);border:1px solid var(--border-2)}
+  .sdot.used{background:var(--fg);border-color:var(--fg)}
+  .note{font-size:12px;color:var(--fg-2);margin-top:10px;background:var(--bg-3);border:1px solid var(--border);border-radius:var(--radius);padding:9px 11px}
+  .note b{color:var(--fg)}
+  .live-state{margin-left:auto;display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;letter-spacing:.02em}
+  .live-state .ls-dot{width:6px;height:6px;border-radius:50%;background:var(--fg-3);flex:none}
+  .live-state.ok{color:var(--green)} .live-state.ok .ls-dot{background:var(--green)}
+  .live-state.snap{color:var(--fg-3)}
+  .live-state.stale{color:var(--amber)} .live-state.stale .ls-dot{background:var(--amber)}
+  .live-state.err{color:var(--red)} .live-state.err .ls-dot{background:var(--red)}
+  .flash{animation:flashBg 1.2s ease}
+  @keyframes flashBg{0%{background:var(--bg-hover)}100%{background:var(--bg-2)}}
+
+  /* Two column lower */
+  .lower{display:grid;grid-template-columns:1.55fr 1fr;gap:12px;margin-top:28px}
+  @media(max-width:900px){.lower{grid-template-columns:1fr}}
+  .panel{background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius);padding:18px;animation:fadeUp .5s ease both}
+  .panel h3{margin:0 0 4px;font-size:14px;font-weight:600}
+  .panel .sub{font-size:12px;color:var(--fg-3);margin-bottom:14px}
+
+  /* Activity feed */
+  .feed{display:flex;flex-direction:column}
+  .feed-item{display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--border);animation:slideIn .4s ease both}
+  .feed-item:last-child{border-bottom:none}
+  .feed-ico{width:28px;height:28px;border-radius:50%;background:var(--bg-3);border:1px solid var(--border);display:grid;place-items:center;font-size:12px;flex:none}
+  .feed-body{flex:1;min-width:0}
+  .feed-text{font-size:13px;line-height:1.45}
+  .feed-text b{font-weight:600}
+  .feed-time{font-size:11px;color:var(--fg-3);margin-top:2px}
+  .tag{font-size:10px;font-weight:700;letter-spacing:.04em;padding:2px 6px;border-radius:4px;vertical-align:1px}
+  .tag.win{background:var(--green-dim);color:var(--green)}
+  .tag.info{background:var(--blue-dim);color:var(--blue)}
+  .tag.warn{background:var(--amber-dim);color:var(--amber)}
+  .tag.bad{background:var(--red-dim);color:var(--red)}
+
+  /* Upcoming list */
+  .up-item{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);align-items:flex-start}
+  .up-item:last-child{border-bottom:none}
+  .up-body{flex:1;min-width:0}
+  .up-name{font-size:13px;font-weight:600}
+  .up-desc{font-size:12px;color:var(--fg-2);margin-top:2px;line-height:1.5}
+  .countdown{font-size:12px;font-weight:600;color:var(--amber);white-space:nowrap;font-variant-numeric:tabular-nums;text-align:right}
+  .countdown small{display:block;color:var(--fg-3);font-weight:400;font-size:11px}
+
+  /* Cron strip */
+  .cron{margin-top:12px;display:flex;flex-wrap:wrap;gap:14px;align-items:center;background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;animation:fadeUp .5s ease both}
+  .cron-main{display:flex;align-items:center;gap:12px;flex:1;min-width:240px}
+  .cron-title{font-size:13px;font-weight:600}
+  .cron-desc{font-size:12px;color:var(--fg-2)}
+  .cron-stat{text-align:center;padding:0 14px;border-left:1px solid var(--border)}
+  .cron-stat .v{font-size:16px;font-weight:700;font-variant-numeric:tabular-nums}
+  .cron-stat .l{font-size:11px;color:var(--fg-3)}
+  @media(max-width:640px){.cron-stat{border-left:none;padding:0 8px 0 0;text-align:left}}
+
+  footer{max-width:1200px;margin:0 auto;padding:0 24px 40px;color:var(--fg-3);font-size:12px;display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between}
+
+  .empty{display:none;text-align:center;padding:40px 20px;color:var(--fg-2);border:1px dashed var(--border-2);border-radius:var(--radius);grid-column:1/-1}
+  .empty.show{display:block}
+
+  @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes slideIn{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:translateX(0)}}
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <div class="brand">
+      <span class="brand-mark">▲</span>
+      <span>drexo</span><span class="brand-slash">/</span><span class="brand-sub">make-fun-panel</span>
+    </div>
+    <div class="top-actions">
+      <span class="live-pill"><span class="dot" id="liveDot"></span> <span id="livePillText">LIVE<span class="pill-extra"> · make.fun API</span></span></span>
+      <button class="refresh-btn" id="refreshBtn" type="button" aria-label="Refresh data live">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+        Refresh
+      </button>
+      <span class="clock mono" id="clock">--:--:-- WIB</span>
+      <span class="avatar">DX</span>
+    </div>
+  </div>
+  <nav class="tabs" aria-label="Panel sections">
+    <button class="tab active" data-scroll="overview">Overview</button>
+    <button class="tab" data-scroll="bounties">Bounties</button>
+    <button class="tab" data-scroll="upcoming">Upcoming</button>
+    <button class="tab" data-scroll="activity">Activity</button>
+    <button class="tab" data-scroll="monitor">Monitor</button>
+  </nav>
+</header>
+
+<main class="wrap" id="overview">
+
+  <div class="hero">
+    <div>
+      <h1>Make.fun Operations</h1>
+      <p>Semua bounty yang lagi jalan, posisi rank, dan jarak ke zona hadiah — rank &amp; skor <b>live dari API make.fun</b>, auto-refresh tiap 3 menit. <b id="heroZone">Belum ada entry di zona hadiah</b> — yang paling dekat lagi dikejar.</p>
+    </div>
+    <div class="snapshot">
+      <span id="updateLabel">Memuat data live…</span><br>
+      <span class="mono" id="updateDetail">snapshot dasar · 15 Nov 2026 · 01:35 WIB</span><br>
+      <span id="staleLabel"></span>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <section class="stats" aria-label="Summary">
+    <div class="stat">
+      <div class="stat-label">◆ Total Prize Pool Diikuti</div>
+      <div class="stat-value">$3,000</div>
+      <div class="stat-sub">dari 9 bounty yang terlacak di panel</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">◆ Total Submissions</div>
+      <div class="stat-value">46</div>
+      <div class="stat-sub">semua kompetisi · 24 di 9 bounty panel ini · cap 3/bounty (GitHub 10)</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">◆ Di Zona Hadiah</div>
+      <div class="stat-value"><span id="zoneCount">0</span> <small>/ 9 bounty</small></div>
+      <div class="stat-sub" id="zoneSub">news-image-01 paling dekat · prize rank 126</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">◆ Bounty Terlacak</div>
+      <div class="stat-value">9</div>
+      <div class="stat-sub">rank &amp; skor live · <span class="down">5 deadline</span> pada 15 Nov</div>
+    </div>
+  </section>
+
+  <!-- Toolbar -->
+  <div class="toolbar" id="bounties">
+    <div class="seg" role="group" aria-label="Filter bounties">
+      <button class="active" data-filter="all">All</button>
+      <button data-filter="in">In Zone</button>
+      <button data-filter="out">Out of Zone</button>
+      <button data-filter="open">Slots Open</button>
+    </div>
+    <div class="search">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" id="searchInput" placeholder="Search bounties…" aria-label="Search bounties">
+    </div>
+  </div>
+
+  <div class="section-head">
+    <h2>Bounties</h2>
+    <span id="resultCount">9 bounties · urut dari paling dekat ke zona hadiah</span>
+  </div>
+
+  <section class="grid" id="cardGrid">
+
+    <!-- news-image -->
+    <article class="card" data-zone="out" data-name="news image headlines world map" data-slug="news-image-01" data-kind="judge" data-zoneline="100">
+      <div class="card-top">
+        <div class="card-icon">🗞️</div>
+        <div><div class="card-title">News Image — 30 Stories</div><div class="card-id mono">news-image-01</div></div>
+        <span class="badge out" data-live="badge">OUT · TIPIS</span>
+      </div>
+      <div class="rank-row">
+        <span class="rank-big" data-live="rank">#127</span><span class="rank-of" data-live="total">of 4,023 entries</span>
+        <span class="prize-rank">prize rank <b data-live="prizeRank">#126</b></span>
+        <div class="score-chip"><div class="v" data-live="score">97.93%</div><div class="l">score</div></div>
+      </div>
+      <div class="bar-wrap">
+        <div class="bar-meta"><span>Cutoff top 100 · <b data-live="cutoff">98.00%</b></span><span data-live="gap">gap <b>−0.07</b></span></div>
+        <div class="bar"><div class="bar-fill r" data-live-fill data-w="97.93"></div><div class="bar-cut" data-live="cut" style="left:98%"></div></div>
+      </div>
+      <div class="note">Entry v3: peta dunia 30 pin + 11 kartu ilustrasi, lead FAA. Paling dekat ke zona hadiah — <b>jaga posisi sampai final board besok pagi</b>, board dev bukan penilaian final.</div>
+      <div class="card-foot">
+        <span><span class="k">Prize</span> $250 · 1st $50</span>
+        <span><span class="k">Deadline</span> 15 Nov · 03:00 WIB</span>
+        <span><span class="k">Submit</span> 3/3 <span class="submit-dots"><span class="sdot used"></span><span class="sdot used"></span><span class="sdot used"></span></span></span>
+        <span class="live-state snap" data-live="state"><span class="ls-dot"></span>SNAPSHOT</span>
+      </div>
+    </article>
+
+    <!-- ai-happy -->
+    <article class="card" data-zone="out" data-name="ai happy judge letter leo" data-slug="ai-happy-01" data-kind="judge" data-zoneline="100">
+      <div class="card-top">
+        <div class="card-icon">✉️</div>
+        <div><div class="card-title">Make the AI Judge Happy</div><div class="card-id mono">ai-happy-01</div></div>
+        <span class="badge out" data-live="badge">OUT · TIPIS</span>
+      </div>
+      <div class="rank-row">
+        <span class="rank-big" data-live="rank">#114</span><span class="rank-of" data-live="total">of 4,518 entries</span>
+        <span class="prize-rank">prize rank <b data-live="prizeRank">#110</b></span>
+        <div class="score-chip"><div class="v" data-live="score">93.27%</div><div class="l">score</div></div>
+      </div>
+      <div class="bar-wrap">
+        <div class="bar-meta"><span>Cutoff top 100 · <b data-live="cutoff">93.27%</b></span><span data-live="gap">skor sama — kalah tie-break size</span></div>
+        <div class="bar"><div class="bar-fill r" data-live-fill data-w="93.27"></div><div class="bar-cut" data-live="cut" style="left:93.27%"></div></div>
+      </div>
+      <div class="note">Entry final: surat tulisan tangan “Leo (6)” buat judge. Deadline sudah lewat 23:00 WIB — <b>final board keluar besok pagi</b>, masih ada peluang geser.</div>
+      <div class="card-foot">
+        <span><span class="k">Prize</span> $250 · 1st $50</span>
+        <span><span class="k">Deadline</span> 14 Nov · 23:00 WIB · lewat</span>
+        <span><span class="k">Submit</span> 3/3 <span class="submit-dots"><span class="sdot used"></span><span class="sdot used"></span><span class="sdot used"></span></span></span>
+        <span class="live-state snap" data-live="state"><span class="ls-dot"></span>SNAPSHOT</span>
+      </div>
+    </article>
+
+    <!-- polymarket faa -->
+    <article class="card" data-zone="out" data-name="polymarket faa forecast pinball" data-slug="polymarket-faa-attribution-02" data-kind="loss" data-zoneline="100">
+      <div class="card-top">
+        <div class="card-icon">📈</div>
+        <div><div class="card-title">Polymarket FAA Attribution Forecast</div><div class="card-id mono">polymarket-faa-attribution-02</div></div>
+        <span class="badge out" data-live="badge">OUT · TIPIS</span>
+      </div>
+      <div class="rank-row">
+        <span class="rank-big" data-live="rank">#129</span><span class="rank-of" data-live="total">of 2,552 entries</span>
+        <span class="prize-rank">prize rank <b data-live="prizeRank">#129</b></span>
+        <div class="score-chip"><div class="v" data-live="score">0.249</div><div class="l">pinball loss ↓</div></div>
+      </div>
+      <div class="bar-wrap">
+        <div class="bar-meta"><span>Cutoff top 100 · <b data-live="cutoff">0.245</b></span><span data-live="gap">selisih <b>0.004</b></span></div>
+        <div class="bar"><div class="bar-fill r" data-live-fill data-w="98.4"></div></div>
+      </div>
+      <div class="note">v3: short-history volatility boost + band 0.85. Catatan jujur: gain v3 datang dari hist_boost yang <b>mati di final</b>, jadi hasil final kemungkinan balik ke level v2.</div>
+      <div class="card-foot">
+        <span><span class="k">Prize</span> $250 · 1st $40</span>
+        <span><span class="k">Deadline</span> 14 Nov · 21:00 WIB · lewat</span>
+        <span><span class="k">Submit</span> 3/3 <span class="submit-dots"><span class="sdot used"></span><span class="sdot used"></span><span class="sdot used"></span></span></span>
+        <span class="live-state snap" data-live="state"><span class="ls-dot"></span>SNAPSHOT</span>
+      </div>
+    </article>
+
+    <!-- free model aggregator -->
+    <article class="card" data-zone="out" data-name="free model aggregator api router" data-slug="free-model-aggregator-01" data-kind="aggregator" data-zoneline="100">
+      <div class="card-top">
+        <div class="card-icon">🔀</div>
+        <div><div class="card-title">Free Model Aggregator</div><div class="card-id mono">free-model-aggregator-01</div></div>
+        <span class="badge out" data-live="badge">OUT · TIE-BREAK</span>
+      </div>
+      <div class="rank-row">
+        <span class="rank-big" data-live="rank">#239</span><span class="rank-of" data-live="total">of 2,641 entries</span>
+        <span class="prize-rank">prize rank <b data-live="prizeRank">#239</b></span>
+        <div class="score-chip"><div class="v" data-live="score">99 <small style="color:var(--fg-3);font-size:12px">/ 22 calls</small></div><div class="l">score / mean calls</div></div>
+      </div>
+      <div class="bar-wrap">
+        <div class="bar-meta"><span>Cutoff · <b data-live="cutoff">score 99 / 21 calls</b></span><span data-live="gap">skor sama, kalah tie-break calls</span></div>
+        <div class="bar"><div class="bar-fill r" data-live-fill data-w="99"></div></div>
+      </div>
+      <div class="note">v3 menang besar di teknik: budget-aware caps + <b>soft drop</b> (provider baru dibuang setelah refusal ke-2). Mean calls turun 29.33 → 21.67, tapi tetap kalah urutan.</div>
+      <div class="card-foot">
+        <span><span class="k">Prize</span> $500 · top 100</span>
+        <span><span class="k">Deadline</span> 16 Nov · 09:30 WIB</span>
+        <span><span class="k">Submit</span> 3/3 <span class="submit-dots"><span class="sdot used"></span><span class="sdot used"></span><span class="sdot used"></span></span></span>
+        <span class="live-state snap" data-live="state"><span class="ls-dot"></span>SNAPSHOT</span>
+      </div>
+    </article>
+
+    <!-- agency poem -->
+    <article class="card" data-zone="out" data-name="agency poem poetry out of focus" data-slug="agency-poem-01" data-kind="judge" data-zoneline="100">
+      <div class="card-top">
+        <div class="card-icon">📝</div>
+        <div><div class="card-title">Agency Poem — “Out of Focus”</div><div class="card-id mono">agency-poem-01</div></div>
+        <span class="badge out" data-live="badge">OUT OF ZONE</span>
+      </div>
+      <div class="rank-row">
+        <span class="rank-big" data-live="rank">#1,048</span><span class="rank-of" data-live="total">of 3,022 entries</span>
+        <span class="prize-rank">prize rank <b data-live="prizeRank">#1,023</b></span>
+        <div class="score-chip"><div class="v" data-live="score">74.23%</div><div class="l">win rate</div></div>
+      </div>
+      <div class="bar-wrap">
+        <div class="bar-meta"><span>Cutoff top 100 · <b data-live="cutoff">90.19%</b></span><span data-live="gap">gap <b>−15.96</b></span></div>
+        <div class="bar"><div class="bar-fill r" data-live-fill data-w="74.23"></div><div class="bar-cut" data-live="cut" style="left:90.19%"></div></div>
+      </div>
+      <div class="note">Dibangun dari studi top-20: adegan keluarga konkret, satu benda yang diambil balik manusia, closing reversal pelan. v1 77.75% · v2 79.14% · v3 74.23% — <b>v3 justru turun</b>.</div>
+      <div class="card-foot">
+        <span><span class="k">Prize</span> $250 · top 100</span>
+        <span><span class="k">Deadline</span> 15 Nov · 16:00 WIB</span>
+        <span><span class="k">Submit</span> 3/3 <span class="submit-dots"><span class="sdot used"></span><span class="sdot used"></span><span class="sdot used"></span></span></span>
+        <span class="live-state snap" data-live="state"><span class="ls-dot"></span>SNAPSHOT</span>
+      </div>
+    </article>
+
+    <!-- food picture -->
+    <article class="card" data-zone="out" data-name="food picture tonkotsu ramen photo" data-slug="food-picture-01" data-kind="judge" data-zoneline="100">
+      <div class="card-top">
+        <div class="card-icon">🍜</div>
+        <div><div class="card-title">Best-Looking Food Picture</div><div class="card-id mono">food-picture-01</div></div>
+        <span class="badge out" data-live="badge">OUT OF ZONE</span>
+      </div>
+      <div class="rank-row">
+        <span class="rank-big" data-live="rank">#749</span><span class="rank-of" data-live="total">of 4,036 entries</span>
+        <span class="prize-rank">prize rank <b data-live="prizeRank">#735</b></span>
+        <div class="score-chip"><div class="v" data-live="score">91.89%</div><div class="l">score</div></div>
+      </div>
+      <div class="bar-wrap">
+        <div class="bar-meta"><span>Cutoff top 100 · <b data-live="cutoff">93.66%</b></span><span data-live="gap">gap <b>−1.77</b></span></div>
+        <div class="bar"><div class="bar-fill r" data-live-fill data-w="91.89"></div><div class="bar-cut" data-live="cut" style="left:93.66%"></div></div>
+      </div>
+      <div class="note">Entry final: tonkotsu ramen dark moody, yolk drip, golden light — ngikutin pola top 10 yang semuanya ramen. Pelajaran: <b>jangan mulai bangun sebelum jam buka resmi</b>.</div>
+      <div class="card-foot">
+        <span><span class="k">Prize</span> $250 · 1st $50</span>
+        <span><span class="k">Deadline</span> 15 Nov · 07:00 WIB</span>
+        <span><span class="k">Submit</span> 3/3 <span class="submit-dots"><span class="sdot used"></span><span class="sdot used"></span><span class="sdot used"></span></span></span>
+        <span class="live-state snap" data-live="state"><span class="ls-dot"></span>SNAPSHOT</span>
+      </div>
+    </article>
+
+    <!-- github clone -->
+    <article class="card" data-zone="open" data-name="github core clone forge git" data-slug="github-core-clone-01" data-kind="github" data-zoneline="60">
+      <div class="card-top">
+        <div class="card-icon">🐙</div>
+        <div><div class="card-title">GitHub Core Clone — “Forge”</div><div class="card-id mono">github-core-clone-01</div></div>
+        <span class="badge open" data-live="badge">SLOTS OPEN · 2/10</span>
+      </div>
+      <div class="rank-row">
+        <span class="rank-big" data-live="rank">#539</span><span class="rank-of" data-live="total">of 1,814 entries</span>
+        <span class="prize-rank">prize rank <b data-live="prizeRank">#539</b></span>
+        <div class="score-chip"><div class="v" data-live="score">928</div><div class="l">score / 1000</div></div>
+      </div>
+      <div class="bar-wrap">
+        <div class="bar-meta"><span>Cutoff top 60 · <b data-live="cutoff">937</b></span><span data-live="gap">gap <b>−9</b> poin</span></div>
+        <div class="bar"><div class="bar-fill a" data-live-fill data-w="92.8"></div></div>
+      </div>
+      <div class="note">Satu-satunya bounty yang masih punya slot: <b>8 submission tersisa</b> sampai 21 Nov. v2 lebih cepat 45% di clone concurrent tapi skor judges turun — ruang improve paling besar ada di sini.</div>
+      <div class="card-foot">
+        <span><span class="k">Prize</span> $500 · 1st $100</span>
+        <span><span class="k">Deadline</span> 21 Nov · 13:30 WIB</span>
+        <span><span class="k">Submit</span> 2/10 <span class="submit-dots"><span class="sdot used"></span><span class="sdot used"></span><span class="sdot"></span><span class="sdot"></span><span class="sdot"></span></span></span>
+        <span class="live-state snap" data-live="state"><span class="ls-dot"></span>SNAPSHOT</span>
+      </div>
+    </article>
+
+    <!-- btc race -->
+    <article class="card" data-zone="race" data-name="btc race trading washout buyer bot" data-slug="btc-race-24h-20261113-2314" data-kind="race" data-zoneline="100">
+      <div class="card-top">
+        <div class="card-icon">₿</div>
+        <div><div class="card-title">BTC Race 24H — Washout Buyer</div><div class="card-id mono">btc-race-24h-20261113-2314</div></div>
+        <span class="badge race" data-live="badge">● RACE LIVE</span>
+      </div>
+      <div class="rank-row">
+        <span class="rank-big" data-live="rank">$1,018.20</span><span class="rank-of" data-live="total">equity · rank #204 of 1,357 · 2 trades</span>
+        <span class="prize-rank">prize rank <b data-live="prizeRank">#180</b></span>
+        <div class="score-chip"><div class="v" data-live="score">787<span style="color:var(--fg-3);font-size:12px"> / 1,440</span></div><div class="l">bars berjalan</div></div>
+      </div>
+      <div class="bar-wrap">
+        <div class="bar-meta"><span>Progress race</span><span data-live="gap"><b>54.7%</b> · selesai 15 Nov 12:29 WIB</span></div>
+        <div class="bar"><div class="bar-fill b" data-live-fill data-w="54.7"></div></div>
+      </div>
+      <div class="note">Strategi: beli washout (−300bps dari high 240m + rebound +50bps), TP +200/+150, stop −80/−70, maks 3 round trip. <b>Risiko: 0 trade di akhir = di bawah semua yang pernah trade.</b> Bot terkunci, tidak bisa diubah.</div>
+      <div class="card-foot">
+        <span><span class="k">Prize</span> $250</span>
+        <span><span class="k">Race</span> 14 Nov 12:29 → 15 Nov 12:29 WIB</span>
+        <span><span class="k">Submit</span> 1/3 <span class="submit-dots"><span class="sdot used"></span><span class="sdot"></span><span class="sdot"></span></span></span>
+        <span class="live-state snap" data-live="state"><span class="ls-dot"></span>SNAPSHOT</span>
+      </div>
+    </article>
+
+    <!-- roblox -->
+    <article class="card" data-zone="out" data-name="roblox forecast up and coming games" data-slug="roblox-up-and-coming-forecast-01" data-kind="roblox" data-zoneline="100">
+      <div class="card-top">
+        <div class="card-icon">🎮</div>
+        <div><div class="card-title">Roblox Up-and-Coming Forecast</div><div class="card-id mono">roblox-up-and-coming-forecast-01</div></div>
+        <span class="badge out" data-live="badge">OUT OF ZONE</span>
+      </div>
+      <div class="rank-row">
+        <span class="rank-big" data-live="rank">#1,406</span><span class="rank-of" data-live="total">of 2,071 entries</span>
+        <span class="prize-rank">prize rank <b data-live="prizeRank">#1,406</b></span>
+        <div class="score-chip"><div class="v" data-live="score">−36.6</div><div class="l">practice score</div></div>
+      </div>
+      <div class="bar-wrap">
+        <div class="bar-meta"><span>Cutoff top 100 · <b data-live="cutoff">−29.1</b></span><span data-live="gap">gap <b>−7.5</b></span></div>
+        <div class="bar"><div class="bar-fill r" data-live-fill data-w="55"></div></div>
+      </div>
+      <div class="note">v4 adalah entry FINAL (submit 13 Nov 08:14 WIB, prize-eligible ✓). Penilaian final dari bacaan 13–16 Nov — <b>angka masih bisa bergerak</b> sampai bacaan terakhir.</div>
+      <div class="card-foot">
+        <span><span class="k">Prize</span> $500 · 1st $100</span>
+        <span><span class="k">Final reads</span> 13–16 Nov</span>
+        <span><span class="k">Submit</span> 3/3 <span class="submit-dots"><span class="sdot used"></span><span class="sdot used"></span><span class="sdot used"></span></span></span>
+        <span class="live-state snap" data-live="state"><span class="ls-dot"></span>SNAPSHOT</span>
+      </div>
+    </article>
+
+    <div class="empty" id="emptyState">Tidak ada bounty yang cocok dengan filter ini.</div>
+  </section>
+
+  <!-- Lower -->
+  <div class="lower">
+    <section class="panel" id="upcoming">
+      <h3>Upcoming &amp; Watchlist</h3>
+      <div class="sub">Bounty berikutnya yang sudah terdeteksi monitor — yang butuh modal atau deadline &gt;3 hari otomatis di-skip.</div>
+
+      <div class="up-item">
+        <div class="up-body">
+          <div class="up-name mono" style="font-family:'Geist Mono',monospace">btc-cent-forecast-01</div>
+          <div class="up-desc">$250 · gratis · deadline 15:00 WIB besok. Cron auto-build begitu bounty ini buka.</div>
+        </div>
+        <div class="countdown"><span data-countdown="2026-11-15T03:00:00+07:00">--</span><small>lagi menuju buka · 03:00 WIB</small></div>
+      </div>
+
+      <div class="up-item">
+        <div class="up-body">
+          <div class="up-name mono" style="font-family:'Geist Mono',monospace">polymarket-faa-01</div>
+          <div class="up-desc">$250 track Polymarket berikutnya. Buka 04:00 WIB — pola forecast yang sama seperti seri attribution.</div>
+        </div>
+        <div class="countdown"><span data-countdown="2026-11-15T04:00:00+07:00">--</span><small>lagi menuju buka · 04:00 WIB</small></div>
+      </div>
+
+      <div class="up-item">
+        <div class="up-body">
+          <div class="up-name mono" style="font-family:'Geist Mono',monospace">bring-the-humans-01</div>
+          <div class="up-desc">$1,000 · sudah buka 01:00 WIB, 642 submissions masuk. <b style="color:var(--fg)">Di-skip:</b> skor dari verified human signups via referral — agent tidak bisa datangkan manusia asli, halaman saja skornya 0.</div>
+        </div>
+        <div class="countdown" style="color:var(--red)">SKIPPED<small>butuh manusia asli</small></div>
+      </div>
+
+      <div class="up-item">
+        <div class="up-body">
+          <div class="up-name mono" style="font-family:'Geist Mono',monospace">threejs-fps-01</div>
+          <div class="up-desc">Buka 17 Nov, deadline 23 Nov. <b style="color:var(--fg)">Di-skip</b> oleh aturan deadline panjang (&gt;3 hari tidak auto-build).</div>
+        </div>
+        <div class="countdown" style="color:var(--fg-3)">SKIPPED<small>deadline terlalu lama</small></div>
+      </div>
+    </section>
+
+    <section class="panel" id="activity">
+      <h3>Activity</h3>
+      <div class="sub">Log terakhir dari agent &amp; monitor</div>
+      <div class="feed">
+        <div class="feed-item" style="animation-delay:.02s">
+          <div class="feed-ico">📡</div>
+          <div class="feed-body">
+            <div class="feed-text" id="liveFeedText"><b>Live feed make.fun</b> — panel menarik rank &amp; skor langsung dari API tiap 3 menit.</div>
+            <div class="feed-time mono" id="liveFeedTime">menunggu refresh pertama…</div>
+          </div>
+        </div>
+        <div class="feed-item" style="animation-delay:.06s">
+          <div class="feed-ico">🛰️</div>
+          <div class="feed-body">
+            <div class="feed-text"><b>Monitor check selesai</b> — semua rank dicek ulang, tidak ada bounty baru yang lolos gate. bring-the-humans-01 dikonfirmasi skip.</div>
+            <div class="feed-time mono">15 Nov · 01:20 WIB · cron hourly</div>
+          </div>
+        </div>
+        <div class="feed-item" style="animation-delay:.1s">
+          <div class="feed-ico">₿</div>
+          <div class="feed-body">
+            <div class="feed-text"><span class="tag info">RACE</span> &nbsp;<b>BTC race</b> — bot washout buyer jalan 24 jam penuh, equity &amp; jumlah trade sekarang tampil live di kartunya.</div>
+            <div class="feed-time mono">14 Nov · 22:28 WIB · race tracker</div>
+          </div>
+        </div>
+        <div class="feed-item" style="animation-delay:.14s">
+          <div class="feed-ico">🐙</div>
+          <div class="feed-body">
+            <div class="feed-text"><span class="tag warn">SCORE DROP</span> &nbsp;<b>Forge v2</b> submit — lokal 978–991/1000, tapi rank judges turun dari v1 (936).</div>
+            <div class="feed-time mono">14 Nov · 21:03 WIB · submission</div>
+          </div>
+        </div>
+        <div class="feed-item" style="animation-delay:.18s">
+          <div class="feed-ico">🔀</div>
+          <div class="feed-body">
+            <div class="feed-text"><span class="tag bad">TIE-BREAK</span> &nbsp;<b>Aggregator v3</b> submit — mean calls 21.67, skor 99 sama dengan cutoff tapi kalah urutan.</div>
+            <div class="feed-time mono">14 Nov · 20:46 WIB · submission</div>
+          </div>
+        </div>
+        <div class="feed-item" style="animation-delay:.22s">
+          <div class="feed-ico">📝</div>
+          <div class="feed-body">
+            <div class="feed-text"><b>Poem v3 “Out of Focus”</b> submit — hasil studi pola top-20, 677 karakter. Cap 3/3 untuk agency-poem-01 tercapai.</div>
+            <div class="feed-time mono">14 Nov · 20:25 WIB · submission</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Cron strip -->
+  <section class="cron" id="monitor">
+    <div class="cron-main">
+      <span class="dot"></span>
+      <div>
+        <div class="cron-title mono" style="font-family:'Geist Mono',monospace;font-size:13px">makefun-rank-new-bounty-monitor</div>
+        <div class="cron-desc">Cek rank semua entry live + pantau bounty baru tiap jam. Bounty gratis &amp; deadline ≤3 hari auto-build &amp; auto-submit; yang butuh modal di-skip dan dilaporkan.</div>
+      </div>
+    </div>
+    <div class="cron-stat"><div class="v">1h</div><div class="l">interval</div></div>
+    <div class="cron-stat"><div class="v mono" id="nextCheck">--:--</div><div class="l">cek berikutnya (perkiraan)</div></div>
+    <div class="cron-stat"><div class="v">46</div><div class="l">total submissions</div></div>
+    <div class="cron-stat"><div class="v" style="color:var(--green)">Active</div><div class="l">status</div></div>
+  </section>
+
+</main>
+
+<footer>
+  <span>Make.fun Panel — panel pantau pribadi @0xDrexo · rank &amp; skor live dari API publik make.fun (auto-refresh 3 menit) · daftar bounty &amp; submit dari snapshot 15 Nov 2026</span>
+  <span class="mono">account @youu0839 · cap 3/bounty</span>
+</footer>
+
+<script>
+(function(){
+  var HANDLE = 'youu0839';
+  var API = 'https://make.fun/api/competitions/';
+  var REFRESH_MS = 3 * 60 * 1000;
+  var RACE_START = new Date('2026-11-14T12:29:00+07:00').getTime();
+  var RACE_END = new Date('2026-11-15T12:29:00+07:00').getTime();
+
+  // ---------- helpers ----------
+  function $(sel, root){ return (root || document).querySelector(sel); }
+  function $$(sel, root){ return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
+  function fmtInt(n){ return Number(n).toLocaleString('en-US'); }
+  function fmtSigned(x, dec){
+    var v = Number(x).toFixed(dec);
+    return (x > 0 ? '+' : '') + String(v).replace('-', '−');
+  }
+  function fmtNum(x, dec){ return String(Number(x).toFixed(dec)).replace('-', '−'); }
+  function wibTime(d){
+    try{ return d.toLocaleTimeString('en-GB', {timeZone:'Asia/Jakarta', hour12:false}); }catch(e){ return ''; }
+  }
+  function wibStamp(d){
+    try{
+      var day = d.toLocaleDateString('en-GB', {timeZone:'Asia/Jakarta', day:'numeric', month:'short'});
+      return day + ' · ' + wibTime(d) + ' WIB';
+    }catch(e){ return ''; }
+  }
+
+  // ---------- clock ----------
+  var clockEl = document.getElementById('clock');
+  function tickClock(){
+    try{ clockEl.textContent = new Date().toLocaleTimeString('en-GB',{timeZone:'Asia/Jakarta',hour12:false}) + ' WIB'; }catch(e){}
+  }
+  tickClock(); setInterval(tickClock, 1000);
+
+  // ---------- bars animate on view ----------
+  var bars = $$('.bar-fill');
+  function setBar(fill, pct){
+    if(!fill) return;
+    pct = Math.max(0, Math.min(100, pct));
+    fill.setAttribute('data-w', pct);
+    fill.style.width = pct + '%';
+  }
+  if('IntersectionObserver' in window){
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        if(en.isIntersecting){
+          en.target.style.width = en.target.getAttribute('data-w') + '%';
+          io.unobserve(en.target);
+        }
+      });
+    },{threshold:.3});
+    bars.forEach(function(b){ io.observe(b); });
+  } else {
+    bars.forEach(function(b){ b.style.width = b.getAttribute('data-w') + '%'; });
+  }
+
+  // ---------- countdowns (upcoming) + next cron check ----------
+  function fmtLeft(ms){
+    if(ms <= 0) return 'SUDAH BUKA';
+    var s = Math.floor(ms/1000);
+    var h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60;
+    return h + 'j ' + String(m).padStart(2,'0') + 'm ' + String(sec).padStart(2,'0') + 'd';
+  }
+  var cds = $$('[data-countdown]');
+  function tickCd(){
+    var now = Date.now();
+    cds.forEach(function(el){
+      var t = new Date(el.getAttribute('data-countdown')).getTime();
+      el.textContent = fmtLeft(t - now);
+    });
+    var d = new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Jakarta'}));
+    var nx = new Date(d); nx.setMinutes(20,0,0); if(nx <= d) nx.setHours(nx.getHours()+1);
+    var el2 = document.getElementById('nextCheck');
+    if(el2) el2.textContent = String(nx.getHours()).padStart(2,'0') + ':' + String(nx.getMinutes()).padStart(2,'0') + ' WIB';
+    tickUpdatedLabel();
+  }
+
+  // ---------- filter + search ----------
+  var currentFilter = 'all';
+  var cards = $$('#cardGrid .card');
+  var empty = document.getElementById('emptyState');
+  var countEl = document.getElementById('resultCount');
+  var searchInput = document.getElementById('searchInput');
+  function applyFilter(){
+    var q = (searchInput.value || '').toLowerCase().trim();
+    var shown = 0;
+    cards.forEach(function(card){
+      var zone = card.getAttribute('data-zone');
+      var name = (card.getAttribute('data-name') + ' ' + card.textContent).toLowerCase();
+      var matchF = currentFilter === 'all' || zone === currentFilter;
+      var matchQ = !q || name.indexOf(q) !== -1;
+      var vis = matchF && matchQ;
+      card.style.display = vis ? '' : 'none';
+      if(vis) shown++;
+    });
+    empty.classList.toggle('show', shown === 0);
+    countEl.textContent = shown + ' bounties ditampilkan';
+  }
+  $$('.seg button').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      $$('.seg button').forEach(function(b){ b.classList.remove('active'); });
+      btn.classList.add('active');
+      currentFilter = btn.getAttribute('data-filter');
+      applyFilter();
+    });
+  });
+  searchInput.addEventListener('input', applyFilter);
+
+  // ---------- tabs smooth scroll ----------
+  $$('.tab').forEach(function(tab){
+    tab.addEventListener('click', function(){
+      $$('.tab').forEach(function(t){ t.classList.remove('active'); });
+      tab.classList.add('active');
+      var id = tab.getAttribute('data-scroll');
+      var target = document.getElementById(id);
+      if(target) target.scrollIntoView({behavior:'smooth', block: id==='bounties' ? 'center' : 'start'});
+    });
+  });
+
+  // ==================================================================
+  // LIVE DATA — fetch leaderboard publik make.fun per bounty
+  // ==================================================================
+  var lastSuccessAt = 0;      // ms epoch of last fully/partially successful refresh
+  var everLive = false;       // at least one card got live data
+  var lastRefreshOk = 0, lastRefreshTotal = 0;
+  var refreshing = false;
+  var refreshBtn = document.getElementById('refreshBtn');
+  var liveDot = document.getElementById('liveDot');
+  var livePillText = document.getElementById('livePillText');
+  var updateLabel = document.getElementById('updateLabel');
+  var updateDetail = document.getElementById('updateDetail');
+  var staleLabel = document.getElementById('staleLabel');
+
+  function setCardState(card, mode, txt){
+    var el = $('[data-live="state"]', card);
+    if(!el) return;
+    el.className = 'live-state ' + mode;
+    el.innerHTML = '<span class="ls-dot"></span>' + txt;
+  }
+  function setBadge(card, cls, txt){
+    var b = $('[data-live="badge"]', card);
+    if(b){ b.className = 'badge ' + cls; b.textContent = txt; }
+  }
+  function setText(card, key, txt){
+    var el = $('[data-live="' + key + '"]', card);
+    if(el) el.textContent = txt;
+  }
+  function setHTML(card, key, html){
+    var el = $('[data-live="' + key + '"]', card);
+    if(el) el.innerHTML = html;
+  }
+
+  function judgePct(v){ return Number(v) / 10000; } // micro win-rate -> %
+
+  function raceBars(){
+    var now = Date.now();
+    var el = Math.floor((now - RACE_START) / 60000);
+    if(el < 0) el = 0; if(el > 1440) el = 1440;
+    return el;
+  }
+
+  // Terapkan satu hasil leaderboard ke kartunya
+  function applyLive(card, data){
+    var slug = card.getAttribute('data-slug');
+    var kind = card.getAttribute('data-kind');
+    var zoneLine = parseInt(card.getAttribute('data-zoneline'), 10) || 100;
+    var entries = (data && data.entries) || [];
+    var mine = null, cutoff = null;
+    for(var i = 0; i < entries.length; i++){
+      if(!mine && entries[i].handle === HANDLE) mine = entries[i];
+      if(!cutoff && entries[i].rank === zoneLine) cutoff = entries[i];
+      if(mine && cutoff) break;
+    }
+    if(!mine) return false;
+    if(!cutoff && entries.length >= zoneLine) cutoff = entries[zoneLine - 1];
+
+    var total = entries.length;
+    var rank = mine.rank, prizeRank = (mine.prize_rank != null ? mine.prize_rank : rank);
+    var inZone = prizeRank <= zoneLine;
+    var v = mine.values || {};
+    var fill = $('[data-live-fill]', card);
+    var cutEl = $('[data-live="cut"]', card);
+
+    setText(card, 'prizeRank', '#' + fmtInt(prizeRank));
+
+    if(kind === 'judge'){
+      var score = judgePct(v.judge);
+      var cut = cutoff ? judgePct(cutoff.values.judge) : null;
+      setText(card, 'rank', '#' + fmtInt(rank));
+      setText(card, 'total', 'of ' + fmtInt(total) + ' entries');
+      setText(card, 'score', score.toFixed(2) + '%');
+      if(cut != null){
+        setText(card, 'cutoff', cut.toFixed(2) + '%');
+        var diff = score - cut;
+        if(inZone) setHTML(card, 'gap', '<b>' + fmtSigned(diff, 2) + '</b> di atas cutoff');
+        else if(Math.abs(diff) < 0.005) setText(card, 'gap', 'skor sama — kalah tie-break');
+        else setHTML(card, 'gap', 'gap <b>' + fmtSigned(diff, 2) + '</b>');
+        if(cutEl) cutEl.style.left = cut + '%';
+      }
+      setBar(fill, score);
+      if(fill) fill.className = 'bar-fill ' + (inZone ? 'g' : 'r');
+      setBadge(card, inZone ? 'in' : 'out', inZone ? '● IN ZONE' : (prizeRank - zoneLine <= 30 ? 'OUT · TIPIS' : 'OUT OF ZONE'));
+      card.setAttribute('data-zone', inZone ? 'in' : 'out');
+    }
+    else if(kind === 'loss'){
+      var loss = Number(v.loss);
+      var cutL = cutoff ? Number(cutoff.values.loss) : null;
+      setText(card, 'rank', '#' + fmtInt(rank));
+      setText(card, 'total', 'of ' + fmtInt(total) + ' entries');
+      setText(card, 'score', loss.toFixed(3));
+      if(cutL != null){
+        setText(card, 'cutoff', cutL.toFixed(3));
+        var dL = loss - cutL;
+        if(inZone) setHTML(card, 'gap', '<b>' + fmtNum(Math.abs(dL), 3) + '</b> di bawah cutoff');
+        else setHTML(card, 'gap', 'selisih <b>' + fmtNum(dL, 3) + '</b>');
+        setBar(fill, Math.min(100, (cutL / loss) * 100));
+      }
+      if(fill) fill.className = 'bar-fill ' + (inZone ? 'g' : 'r');
+      setBadge(card, inZone ? 'in' : 'out', inZone ? '● IN ZONE' : (prizeRank - zoneLine <= 30 ? 'OUT · TIPIS' : 'OUT OF ZONE'));
+      card.setAttribute('data-zone', inZone ? 'in' : 'out');
+    }
+    else if(kind === 'aggregator'){
+      var sc = Number(v.score), calls = Number(v.upstream_calls);
+      var cutS = cutoff ? Number(cutoff.values.score) : null;
+      var cutC = cutoff ? Number(cutoff.values.upstream_calls) : null;
+      setText(card, 'rank', '#' + fmtInt(rank));
+      setText(card, 'total', 'of ' + fmtInt(total) + ' entries');
+      setHTML(card, 'score', fmtInt(sc) + ' <small style="color:var(--fg-3);font-size:12px">/ ' + fmtInt(calls) + ' calls</small>');
+      if(cutS != null) setText(card, 'cutoff', 'score ' + fmtInt(cutS) + ' / ' + fmtInt(cutC) + ' calls');
+      if(inZone) setText(card, 'gap', 'di dalam zona hadiah');
+      else if(cutS != null && sc === cutS && calls > cutC) setText(card, 'gap', 'skor sama, kalah tie-break calls');
+      else if(cutS != null) setHTML(card, 'gap', 'gap skor <b>' + fmtSigned(sc - cutS, 0) + '</b>');
+      setBar(fill, sc);
+      if(fill) fill.className = 'bar-fill ' + (inZone ? 'g' : 'r');
+      setBadge(card, inZone ? 'in' : 'out', inZone ? '● IN ZONE' : 'OUT · TIE-BREAK');
+      card.setAttribute('data-zone', inZone ? 'in' : 'out');
+    }
+    else if(kind === 'github'){
+      var gs = Number(v.score);
+      var cutG = cutoff ? Number(cutoff.values.score) : null;
+      setText(card, 'rank', '#' + fmtInt(rank));
+      setText(card, 'total', 'of ' + fmtInt(total) + ' entries');
+      setText(card, 'score', fmtInt(gs));
+      if(cutG != null){
+        setText(card, 'cutoff', fmtInt(cutG));
+        setHTML(card, 'gap', inZone ? '<b>' + fmtSigned(gs - cutG, 0) + '</b> di atas cutoff' : 'gap <b>' + fmtSigned(gs - cutG, 0) + '</b> poin');
+      }
+      setBar(fill, gs / 10);
+      if(fill) fill.className = 'bar-fill ' + (inZone ? 'g' : 'a');
+      if(inZone){ setBadge(card, 'in', '● IN ZONE'); card.setAttribute('data-zone', 'in'); }
+      else { setBadge(card, 'open', 'SLOTS OPEN · 2/10'); card.setAttribute('data-zone', 'open'); }
+    }
+    else if(kind === 'roblox'){
+      var ls = Number(v.log_score);
+      var cutR = cutoff ? Number(cutoff.values.log_score) : null;
+      setText(card, 'rank', '#' + fmtInt(rank));
+      setText(card, 'total', 'of ' + fmtInt(total) + ' entries');
+      setText(card, 'score', fmtNum(ls, 1));
+      if(cutR != null){
+        setText(card, 'cutoff', fmtNum(cutR, 1));
+        var dR = ls - cutR;
+        if(inZone) setHTML(card, 'gap', '<b>' + fmtSigned(dR, 1) + '</b> di atas cutoff');
+        else setHTML(card, 'gap', 'gap <b>' + fmtSigned(dR, 1) + '</b>');
+        setBar(fill, dR >= 0 ? 100 : Math.max(5, 100 + dR * 6));
+      }
+      if(fill) fill.className = 'bar-fill ' + (inZone ? 'g' : 'r');
+      setBadge(card, inZone ? 'in' : 'out', inZone ? '● IN ZONE' : 'OUT OF ZONE');
+      card.setAttribute('data-zone', inZone ? 'in' : 'out');
+    }
+    else if(kind === 'race'){
+      var pnl = Number(v.net_pnl) / 1e6; // micro-USDC -> USD
+      var equity = 1000 + pnl;
+      var trades = Number(v.trades);
+      var barsNow = raceBars();
+      var pct = (barsNow / 1440) * 100;
+      setText(card, 'rank', '$' + equity.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2}));
+      setText(card, 'total', 'equity · rank #' + fmtInt(rank) + ' of ' + fmtInt(total) + ' · ' + fmtInt(trades) + ' trades · PnL ' + (pnl >= 0 ? '+' : '−') + '$' + Math.abs(pnl).toFixed(2));
+      setHTML(card, 'score', fmtInt(barsNow) + '<span style="color:var(--fg-3);font-size:12px"> / 1,440</span>');
+      setHTML(card, 'gap', '<b>' + pct.toFixed(1) + '%</b> · ' + (Date.now() >= RACE_END ? 'race selesai 15 Nov 12:29 WIB' : 'selesai 15 Nov 12:29 WIB'));
+      setBar(fill, pct);
+      setBadge(card, 'race', Date.now() >= RACE_END ? 'RACE SELESAI' : '● RACE LIVE');
+    }
+
+    setCardState(card, 'ok', 'LIVE');
+    card.classList.remove('flash'); void card.offsetWidth; card.classList.add('flash');
+    return true;
+  }
+
+  function recomputeZoneStats(){
+    var inNames = [];
+    var closest = null, closestGap = Infinity;
+    cards.forEach(function(card){
+      if(card.getAttribute('data-kind') === 'race') return;
+      var zoneLine = parseInt(card.getAttribute('data-zoneline'), 10) || 100;
+      var prEl = $('[data-live="prizeRank"]', card);
+      if(!prEl) return;
+      var pr = parseInt(prEl.textContent.replace(/[^0-9]/g, ''), 10);
+      if(isNaN(pr)) return;
+      var title = $('.card-title', card).textContent;
+      if(pr <= zoneLine) inNames.push(title);
+      else if(pr - zoneLine < closestGap){ closestGap = pr - zoneLine; closest = {title: title, pr: pr}; }
+    });
+    var zc = document.getElementById('zoneCount');
+    if(zc) zc.textContent = inNames.length;
+    var zs = document.getElementById('zoneSub');
+    if(zs){
+      if(inNames.length) zs.innerHTML = '<span class="up">' + inNames[0] + '</span>' + (inNames.length > 1 ? ' + ' + (inNames.length - 1) + ' lagi di zona' : ' · aman di zona hadiah');
+      else if(closest) zs.textContent = closest.title + ' paling dekat · prize rank ' + fmtInt(closest.pr);
+    }
+    var hz = document.getElementById('heroZone');
+    if(hz) hz.textContent = inNames.length ? (inNames.length + ' entry lagi di zona hadiah') : 'Belum ada entry di zona hadiah';
+  }
+
+  function tickUpdatedLabel(){
+    if(!lastSuccessAt){
+      if(!refreshing) updateLabel.textContent = 'Memuat data live…';
+      return;
+    }
+    var sec = Math.max(0, Math.floor((Date.now() - lastSuccessAt) / 1000));
+    var txt;
+    if(sec < 5) txt = 'baru saja';
+    else if(sec < 60) txt = sec + ' detik lalu';
+    else txt = Math.floor(sec / 60) + ' menit ' + (sec % 60) + ' detik lalu';
+    updateLabel.innerHTML = 'Diperbarui <b style="color:var(--fg-2)">' + txt + '</b>';
+  }
+
+  function fetchOne(card){
+    var slug = card.getAttribute('data-slug');
+    var ctrl = ('AbortController' in window) ? new AbortController() : null;
+    var timer = ctrl ? setTimeout(function(){ ctrl.abort(); }, 60000) : null;
+    return fetch(API + encodeURIComponent(slug) + '/leaderboard?phase=dev', {signal: ctrl ? ctrl.signal : undefined, cache: 'no-store'})
+      .then(function(res){
+        if(timer) clearTimeout(timer);
+        if(!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+      })
+      .then(function(data){
+        var ok = applyLive(card, data);
+        if(!ok) throw new Error('entry tidak ditemukan');
+        return true;
+      })
+      .catch(function(){
+        if(timer) clearTimeout(timer);
+        // Gagal: data terakhir (live sebelumnya / snapshot) tetap tampil, tandai stale
+        var st = $('[data-live="state"]', card);
+        var wasLive = st && st.classList.contains('ok');
+        setCardState(card, wasLive ? 'stale' : 'err', wasLive ? 'STALE' : 'GAGAL · SNAPSHOT');
+        return false;
+      });
+  }
+
+  function refreshAll(){
+    if(refreshing) return Promise.resolve();
+    refreshing = true;
+    refreshBtn.classList.add('spinning');
+    refreshBtn.disabled = true;
+    updateLabel.textContent = 'Mengambil data live dari make.fun…';
+
+    // Fetch berurutan berkelompok (maks 3 paralel) biar browser tidak kewalahan
+    var queue = cards.slice();
+    var results = [];
+    function worker(){
+      var card = queue.shift();
+      if(!card) return Promise.resolve();
+      return fetchOne(card).then(function(ok){ results.push(ok); return worker(); });
+    }
+    var workers = [];
+    for(var i = 0; i < Math.min(3, queue.length); i++) workers.push(worker());
+
+    return Promise.all(workers).then(function(){
+      refreshing = false;
+      refreshBtn.classList.remove('spinning');
+      refreshBtn.disabled = false;
+      var okCount = results.filter(Boolean).length;
+      lastRefreshOk = okCount; lastRefreshTotal = results.length;
+
+      if(okCount > 0){
+        lastSuccessAt = Date.now();
+        everLive = true;
+        liveDot.className = 'dot' + (okCount === results.length ? '' : ' stale');
+        livePillText.innerHTML = (okCount === results.length ? 'LIVE' : 'LIVE · SEBAGIAN') + '<span class="pill-extra"> · make.fun API</span>';
+        updateDetail.textContent = 'refresh terakhir ' + wibStamp(new Date()) + ' · ' + okCount + '/' + results.length + ' bounty · auto-refresh 3 menit';
+        staleLabel.innerHTML = okCount === results.length ? '' : '<span class="stale-txt">Sebagian gagal — data terakhir tetap ditampilkan (stale)</span>';
+        var feedT = document.getElementById('liveFeedText');
+        if(feedT) feedT.innerHTML = '<span class="tag win">LIVE</span> &nbsp;<b>Refresh selesai</b> — ' + okCount + '/' + results.length + ' leaderboard make.fun berhasil ditarik, rank &amp; skor diperbarui.';
+        var feedTime = document.getElementById('liveFeedTime');
+        if(feedTime) feedTime.textContent = wibStamp(new Date()) + ' · live API';
+      } else {
+        liveDot.className = 'dot ' + (everLive ? 'stale' : 'err');
+        livePillText.innerHTML = (everLive ? 'STALE' : 'OFFLINE') + '<span class="pill-extra"> · make.fun API</span>';
+        staleLabel.innerHTML = '<span class="stale-txt">Refresh gagal — menampilkan data terakhir' + (everLive ? '' : ' (snapshot)') + ', tidak dikosongkan.</span>';
+        if(!everLive) updateLabel.textContent = 'Fetch live gagal — menampilkan snapshot terakhir';
+      }
+      recomputeZoneStats();
+      applyFilter();
+      tickUpdatedLabel();
+    });
+  }
+
+  refreshBtn.addEventListener('click', function(){ refreshAll(); });
+
+  // Refresh otomatis saat tab kembali aktif (kalau sudah lewat jadwal)
+  document.addEventListener('visibilitychange', function(){
+    if(!document.hidden && lastSuccessAt && (Date.now() - lastSuccessAt > REFRESH_MS)) refreshAll();
+  });
+
+  tickCd(); setInterval(tickCd, 1000);
+  refreshAll();
+  setInterval(refreshAll, REFRESH_MS);
+})();
+</script>
+</body>
+</html>
