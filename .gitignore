@@ -1,6 +1,7 @@
 .env
 node_modules
 dist
+dist-test
 *.log
 .DS_Store
 # Circuit binaries are fetched at setup (scripts/download-circuits.sh),

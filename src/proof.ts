@@ -1,4 +1,6 @@
 import { randomBytes } from "node:crypto";
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 import * as snarkjs from "snarkjs";
 
 /**
@@ -37,10 +39,53 @@ export const GATEKEEPER_VK_HASH =
 export const VFY_POLICY_VK_HASH =
   "0x6c56509f1c56fd1fd4e9737f906d2220f4b95f1d507f1adf6899085bd74be047";
 
-const GATEKEEPER_WASM = new URL("../circuits/gatekeeper.wasm", import.meta.url).pathname;
-const GATEKEEPER_ZKEY = new URL("../circuits/gatekeeper_final.zkey", import.meta.url).pathname;
-const VFY_WASM = new URL("../circuits/vfy-policy.wasm", import.meta.url).pathname;
-const VFY_ZKEY = new URL("../circuits/vfy-policy_final.zkey", import.meta.url).pathname;
+/**
+ * Resolve a circuit artifact file, trying every layout the agent can run in.
+ *
+ * The files live in circuits/ at the repo root, but the code that loads them
+ * does not always sit next to that directory:
+ *   - src/ (dev / tests) and dist/ (built server): ../circuits relative to
+ *     this module.
+ *   - Vercel bundle: the handler is bundled to api/index.func/index.js and
+ *     vercel.json includeFiles copies circuits/ next to it (./circuits).
+ *   - CIRCUITS_DIR env var: explicit override, wins over everything.
+ *   - process.cwd() fallbacks: running from the repo root (or its parent).
+ *
+ * Returns the first candidate that exists on disk, and logs which one was
+ * picked so a wrong path is visible in the deploy logs instead of silent.
+ */
+export function resolveCircuitPath(filename: string): string {
+  const candidates: string[] = [];
+  if (process.env.CIRCUITS_DIR) {
+    candidates.push(join(process.env.CIRCUITS_DIR, filename));
+  }
+  candidates.push(new URL(`../circuits/${filename}`, import.meta.url).pathname);
+  candidates.push(new URL(`./circuits/${filename}`, import.meta.url).pathname);
+  candidates.push(join(process.cwd(), "circuits", filename));
+  candidates.push(join(process.cwd(), "..", "circuits", filename));
+  for (const candidate of candidates) {
+    if (existsSync(candidate)) return candidate;
+  }
+  console.warn(
+    `[proof] circuit file not found: ${filename} (tried: ${candidates.join(", ")})`,
+  );
+  return candidates[0];
+}
+
+const CIRCUITS = {
+  gatekeeperWasm: resolveCircuitPath("gatekeeper.wasm"),
+  gatekeeperZkey: resolveCircuitPath("gatekeeper_final.zkey"),
+  vfyWasm: resolveCircuitPath("vfy-policy.wasm"),
+  vfyZkey: resolveCircuitPath("vfy-policy_final.zkey"),
+};
+console.log(
+  `[proof] circuits: gatekeeper=${CIRCUITS.gatekeeperWasm}, vfy-policy=${CIRCUITS.vfyWasm}`,
+);
+
+const GATEKEEPER_WASM = CIRCUITS.gatekeeperWasm;
+const GATEKEEPER_ZKEY = CIRCUITS.gatekeeperZkey;
+const VFY_WASM = CIRCUITS.vfyWasm;
+const VFY_ZKEY = CIRCUITS.vfyZkey;
 
 export function hexToBigInt(hex: string): bigint {
   return BigInt(hex.startsWith("0x") ? hex : "0x" + hex);

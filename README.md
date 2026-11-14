@@ -148,6 +148,30 @@ tracks, paste the public GitHub repo URL and the endpoint
 (`https://<host>/agent`), rotate the secret, run preflight (must pass before
 the agent is marked active).
 
+### Vercel (serverless, Hobby free tier, no card)
+
+The same agent also runs as a Vercel serverless function (`api/index.ts`,
+same code path as the standalone server via `src/handler.ts`):
+- `vercel.json` rewrites `/agent` and `/health` to the function, sets
+  `maxDuration` 60, and bundles the circuit files (`circuits/**`) into the
+  function via `includeFiles`.
+- Circuits are downloaded at build time by the `postinstall` script, same as
+  everywhere else. Their location is resolved in `src/proof.ts`
+  (`CIRCUITS_DIR` override + fallbacks), because the bundled handler does
+  not live next to `src/`.
+- Deploy: connect the GitHub repo in the Vercel dashboard (or `vercel`
+  from a checkout). Set env vars `AGENT_GAMES_HMAC_SECRET`, `KURIER_API_KEY`,
+  `STRATEGY_PARAMS` in the Vercel project settings. Register the endpoint
+  (`https://<project>.vercel.app/agent`) on the dashboard, rotate the
+  secret, run preflight.
+- Test locally (no deploy): `npm run test:vercel` calls the handler with
+  mock requests (preflight, gatekeeper valid + trap, bad signature) and
+  checks the circuit paths resolve.
+- Caveats: Hobby functions are stateless per invocation - the in-memory
+  anti-replay set (`usedProofRefs`) does not persist across cold starts,
+  same as any restart of the standalone server. Proof generation takes
+  ~1s here, well inside the 55s internal timeout.
+
 ## Register (dashboard)
 
 1. https://agentgames.zkverify.io/register — sign in with X or wallet.

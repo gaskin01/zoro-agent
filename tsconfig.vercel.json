@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "noEmit": true,
+    "outDir": "dist-vercel",
+    "rootDir": "."
+  },
+  "exclude": [
+    "node_modules",
+    "dist",
+    "dist-vercel",
+    "test"
+  ],
+  "extends": "./tsconfig.json",
+  "include": [
+    "src/**/*",
+    "api/**/*"
+  ]
+}
